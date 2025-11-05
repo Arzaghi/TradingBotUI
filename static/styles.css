@@ -6,6 +6,17 @@ body {
     padding: 20px;
 }
 
+body {
+  direction: ltr; /* Force left-to-right layout */
+  text-align: left; /* Align text to the left */
+}
+
+.positions-table th,
+.positions-table td {
+  text-align: left; /* Ensure all table cells align left */
+}
+
+
 .container {
     max-width: 1200px;
     margin: auto;
