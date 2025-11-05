@@ -1,47 +1,267 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>📈 Live Positions</title>
-  <link rel="stylesheet" href="/static/styles.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📈 Live Positions</title>
+    <!-- Load Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles to enhance table visibility and readability, matching history.html */
+        :root {
+            --primary-color: #3b82f6;
+            /* Text colors for profit column */
+            --positive-color: #065f46;
+            /* Darker green for text contrast */
+            --negative-color: #991b1b;
+            /* Darker red for text contrast */
+            --neutral-color: #4b5563;
+            /* Gray for text contrast */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .header {
+            background-color: white;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .positions-table th,
+        .positions-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            /* Ensure the border-bottom is always visible */
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .positions-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        /* Hover effect slightly dims the row regardless of its background color */
+        .positions-table tr:hover {
+            opacity: 0.9;
+            transition: opacity 0.1s ease-in-out;
+        }
+
+        /* Profit text color highlighting (applied only to the profit TD) */
+        .profit-positive {
+            color: var(--positive-color);
+            font-weight: 600;
+        }
+
+        .profit-negative {
+            color: var(--negative-color);
+            font-weight: 600;
+        }
+
+        .profit-zero {
+            color: var(--neutral-color);
+        }
+    </style>
 </head>
-<body dir="ltr">
-  <div class="header">
-    <h1>📈 Exchange UI — Live Positions</h1>
-    <button onclick="window.location.href='/history'">📚 View History</button>
-  </div>
 
-  <div class="container">
-    <table id="positions-table" class="positions-table">
-      <thead></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<body dir="ltr" class="min-h-screen">
+    <div class="header flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-gray-800">📈 KHAMENEI Exchange — Live Positions</h1>
+        <div class="header-buttons flex space-x-3">
+            <button onclick="fetchPositions()"
+                class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-150">🔄
+                Refresh</button>
+            <button onclick="window.location.href='/history'"
+                class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150">📚 View
+                History</button>
+        </div>
+    </div>
 
-<script>
-    const columns = [
-        "id", "type", "symbol", "interval", "open_time", "entry",
-        "initial_sl", "current_sl", "next_tp", "current_profit", "current_price"
-    ];
+    <div class="container mx-auto p-4 md:p-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4 mt-6">Active Open Positions</h2>
 
-    async function fetchPositions() {
-        const res = await fetch('/api/current_positions');
-        const data = await res.json();
-        const tableHead = document.querySelector('#positions-table thead');
-        const tableBody = document.querySelector('#positions-table tbody');
+        <!-- Positions Table -->
+        <div class="overflow-x-auto bg-white rounded-xl shadow-lg">
+            <table id="positions-table" class="positions-table w-full divide-y divide-gray-200">
+                <thead></thead>
+                <tbody id="positions-tbody"></tbody>
+            </table>
+        </div>
+    </div>
 
-        tableHead.innerHTML = `
-            <tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>
-        `;
+    <script>
+        const columns = [
+            "id", "type", "symbol", "interval", "open_time", "entry",
+            "initial_sl", "current_sl", "next_tp", "current_profit", "current_price"
+        ];
 
-        tableBody.innerHTML = data.map(row => `
-            <tr>${columns.map(col => `<td>${row[col]}</td>`).join('')}</tr>
-        `).join('');
-    }
+        // Map column names to their index in the row for fast lookup (e.g., columns[9] is current_profit)
+        const COL_PROFIT_INDEX = columns.indexOf('current_profit');
+        const COL_PRICE_INDEX = columns.indexOf('current_price');
 
-    fetchPositions();
-    setInterval(fetchPositions, 2000);
-</script>
+        /**
+         * Helper function to get the row and text classes based on profit value.
+         */
+        function getProfitClasses(profit) {
+            let profitClass = 'profit-zero';
+            let rowBgClass = 'bg-white'; // Default background
+
+            if (profit > 0) {
+                profitClass = 'profit-positive';
+                rowBgClass = 'bg-green-50'; // Very light green for positive
+            } else if (profit < 0) {
+                profitClass = 'profit-negative';
+                rowBgClass = 'bg-red-50'; // Very light red for negative
+            }
+            return { profitClass, rowBgClass };
+        }
+
+        /**
+         * Creates a new table row element for a position.
+         */
+        function createRow(row) {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-id', row.id);
+
+            columns.forEach(col => {
+                const cellValue = row[col] ?? '';
+                const td = document.createElement('td');
+                td.textContent = cellValue;
+                td.className = 'text-gray-700'; // Default text color
+
+                // Special handling for profit and price cells for later patching
+                if (col === 'current_profit') {
+                    td.setAttribute('data-column', 'profit');
+                } else if (col === 'current_price') {
+                    td.setAttribute('data-column', 'price');
+                }
+                tr.appendChild(td);
+            });
+
+            // Apply initial colors based on profit
+            updateRowColors(tr, parseFloat(row.current_profit));
+            return tr;
+        }
+
+        /**
+         * Updates the text and background color of an existing row based on profit.
+         */
+        function updateRowColors(tr, profit) {
+            const { profitClass, rowBgClass } = getProfitClasses(profit);
+
+            // Update row background color
+            tr.className = rowBgClass;
+
+            // Update profit cell text color
+            const profitCell = tr.children[COL_PROFIT_INDEX];
+            if (profitCell) {
+                // Remove all existing profit classes before adding the new one
+                profitCell.classList.remove('profit-positive', 'profit-negative', 'profit-zero');
+                profitCell.classList.add(profitClass);
+            }
+        }
+
+
+        async function fetchPositions() {
+            const tableHead = document.querySelector('#positions-table thead');
+            const tableBody = document.getElementById('positions-tbody');
+
+            // Only show loading message if the table is completely empty
+            if (tableBody.children.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-gray-500">Loading live positions...</td></tr>';
+            }
+
+            try {
+                const res = await fetch('/api/current_positions');
+                if (!res.ok) throw new Error('Failed to fetch live positions data');
+                const data = await res.json();
+
+                // Build header once (and clean up column names)
+                if (tableHead.children.length === 0) {
+                    tableHead.innerHTML = `<tr>${columns.map(col => `<th class="sticky top-0">${col.replace(/_/g, ' ')}</th>`).join('')}</tr>`;
+                }
+
+                if (data.length === 0) {
+                    // If no data, clear the table body without flickering
+                    tableBody.replaceChildren();
+                    tableBody.innerHTML = '<tr><td colspan="11" class="text-center py-8 text-gray-500">No active positions found.</td></tr>';
+                    return;
+                }
+
+                // --- Anti-Flicker Implementation: Patching ---
+
+                const newPositionIds = new Set(data.map(p => p.id));
+                const fragment = document.createDocumentFragment();
+                let newTableBodyContent = []; // Array to hold the TR elements in the correct order
+
+                // 1. Map existing rows for fast lookup
+                const existingRows = new Map();
+                tableBody.querySelectorAll('tr[data-id]').forEach(tr => {
+                    existingRows.set(tr.getAttribute('data-id'), tr);
+                });
+
+                // 2. Process incoming data: Patch or Create
+                data.forEach(row => {
+                    const id = row.id;
+                    const profit = parseFloat(row.current_profit);
+                    const price = row.current_price;
+
+                    let tr;
+
+                    if (existingRows.has(id)) {
+                        // --- PATCH EXISTING ROW ---
+                        tr = existingRows.get(id);
+
+                        // a. Update color classes
+                        updateRowColors(tr, profit);
+
+                        // b. Update profit and price cells content
+                        const profitCell = tr.children[COL_PROFIT_INDEX];
+                        const priceCell = tr.children[COL_PRICE_INDEX];
+
+                        if (profitCell) { profitCell.textContent = profit; }
+                        if (priceCell) { priceCell.textContent = price; }
+
+                        // Remove patched row from map so it's not deleted later
+                        existingRows.delete(id);
+                    } else {
+                        // --- CREATE NEW ROW ---
+                        tr = createRow(row);
+                    }
+
+                    // Add the row to the array, maintaining the order from the API
+                    newTableBodyContent.push(tr);
+                });
+
+                // 3. Remove closed positions (Any TR left in existingRows was not in the new data)
+                existingRows.forEach(tr => {
+                    tr.remove(); // Direct removal
+                });
+
+                // 4. Update the table body with the reordered/patched/new rows in one operation
+                // This is done by appending the rows to the fragment and replacing the children once.
+                newTableBodyContent.forEach(tr => fragment.appendChild(tr));
+                tableBody.replaceChildren(fragment);
+
+            } catch (error) {
+                console.error("Error fetching live positions:", error);
+                if (tableBody.children.length === 0 || tableBody.children[0].getAttribute('data-id') === null) {
+                    tableBody.innerHTML = '<tr><td colspan="11" class="text-center py-8 text-red-500">Failed to load live positions.</td></tr>';
+                }
+            }
+        }
+
+        // Initial load and set interval
+        fetchPositions();
+        setInterval(fetchPositions, 2000);
+    </script>
 </body>
+
 </html>

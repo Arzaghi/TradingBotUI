@@ -5,25 +5,115 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>📚 Position History</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <!-- Load Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles to enhance table visibility and readability */
+        :root {
+            --primary-color: #3b82f6;
+            /* Text colors for profit column */
+            --positive-color: #065f46; /* Darker green for text contrast */
+            --negative-color: #991b1b; /* Darker red for text contrast */
+            --neutral-color: #4b5563; /* Gray for text contrast */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .header {
+            background-color: white;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .positions-table th,
+        .positions-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            /* Ensure the border-bottom is always visible */
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .positions-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        /* Hover effect slightly dims the row regardless of its background color */
+        .positions-table tr:hover {
+            opacity: 0.9;
+            transition: opacity 0.1s ease-in-out;
+        }
+
+        /* Profit text color highlighting (applied only to the profit TD) */
+        .profit-positive {
+            color: var(--positive-color);
+            font-weight: 600;
+        }
+
+        .profit-negative {
+            color: var(--negative-color);
+            font-weight: 600;
+        }
+
+        .profit-zero {
+            color: var(--neutral-color);
+        }
+
+        /* Statistics Card Styling */
+        .stat-card {
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 
-<body dir="ltr">
+<body dir="ltr" class="min-h-screen">
     <div class="header">
-        <h1>📚 Exchange UI — Position History</h1>
-        <div class="header-buttons">
-            <button onclick="window.location.href='/'">📈 Back to Live</button>
-            <button onclick="downloadCSV()">⬇️ Download CSV</button>
-            <button onclick="openInGoogleSheets()">📂 Open in Google Sheets</button>
-            <button onclick="loadHistory()">🔄 Refresh</button>
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">📚 KHAMENEI Exchange — Position History</h1>
+        <div class="header-buttons flex space-x-3">
+            <button onclick="window.location.href='/'"
+                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150">📈 Back
+                to Live</button>
+            <button onclick="downloadCSV()"
+                class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150">⬇️ Download CSV
+            </button>
+            <button onclick="refreshData()"
+                class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-150">🔄 Refresh
+            </button>
         </div>
     </div>
 
-    <div class="container">
-        <table id="history-table" class="positions-table">
-            <thead></thead>
-            <tbody></tbody>
-        </table>
+    <div class="container mx-auto p-4 md:p-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4 mt-6">📊 Trading Statistics</h2>
+
+        <!-- Statistics Table/Cards -->
+        <!-- Adjusted layout to accommodate 10 items (grid-cols-4 for better viewing) -->
+        <div id="statistics-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Cards will be injected here by JavaScript -->
+            <div class="col-span-full text-center py-8 text-gray-500" id="loading-stats">Loading statistics...</div>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4 mt-6">📜 All Positions History</h2>
+
+        <!-- History Table -->
+        <div class="overflow-x-auto bg-white rounded-xl shadow-lg">
+            <table id="history-table" class="positions-table w-full divide-y divide-gray-200">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -31,33 +121,146 @@
             "type", "symbol", "interval", "entry", "initial_sl", "initial_tp",
             "exit_price", "open_time", "close_time", "duration", "profit"
         ];
+        
+        // Fixed Risk Amount for Calculation (as requested)
+        const RISK_AMOUNT = 20; // $20
 
-        async function loadHistory() {
-            const res = await fetch('/api/positions_history');
-            const data = await res.json();
-            const tableHead = document.querySelector('#history-table thead');
-            const tableBody = document.querySelector('#history-table tbody');
+        // --- Data Loading Functions ---
 
-            tableHead.innerHTML = `
-        <tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>
-        `;
+        async function loadStatistics() {
+            const statsContainer = document.getElementById('statistics-container');
+            statsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Calculating statistics...</div>';
 
-            tableBody.innerHTML = data.map(row => `
-        <tr>${columns.map(col => `<td>${row[col] ?? ''}</td>`).join('')}</tr>
-        `).join('');
+            try {
+                const res = await fetch('/api/history_stats');
+                if (!res.ok) throw new Error('Failed to fetch statistics');
+                const stats = await res.json();
+                
+                // Calculate Net Profit based on R-Multiple sum (stats.total_profit) multiplied by fixed risk
+                // ASSUMPTION: The 'profit' column in the CSV represents the R-multiple (Risk Multiplier).
+                const netProfitInDollars = stats.total_profit * RISK_AMOUNT;
+
+                // Define the cards in the updated order (10 cards)
+                const statDefinitions = [
+                    // 1. Total Positions
+                    { label: "Total Positions", key: "total_records", icon: "🔢", color: "bg-blue-500", value: stats.total_records },
+                    
+                    // 2. Total Net Profit (Multiplied by Risk) - Dollar Value (Keep two decimals)
+                    { label: "Total Net Profit ($ Sum)", key: "net_profit_dollar", icon: "💰", color: netProfitInDollars >= 0 ? "bg-green-600" : "bg-red-600", value: netProfitInDollars.toFixed(2), prefix: '$' },
+                    
+                    // 3. Risk - Dollar Value (Keep two decimals)
+                    { label: "Risk per Trade (Fixed)", key: "risk", icon: "🛡️", color: "bg-gray-700", value: RISK_AMOUNT.toFixed(2), prefix: '$' },
+
+                    // 4. NEW: Total Net Profit (R Sum) - R-Multiple Value (Now integer)
+                    { label: "Total Net Profit (R Sum)", key: "total_profit", icon: "➗", color: stats.total_profit >= 0 ? "bg-indigo-700" : "bg-red-700", value: stats.total_profit, prefix: 'R' },
+
+                    // 5. Winning Trades (Profit > 0)
+                    { label: "Winning Trades", key: "winning_trades_count", icon: "✅", color: "bg-green-500", value: stats.winning_trades_count },
+                    
+                    // 6. Total Gross Profit (R Sum) - R-Multiple Value (Now integer)
+                    { label: "Total Gross Profit (R Sum)", key: "positive_profit_sum", icon: "📈", color: "bg-teal-500", value: stats.positive_profit_sum, prefix: 'R' },
+
+                    // 7. Breakeven Trades (Profit = 0)
+                    { label: "Breakeven Trades", key: "zero_profit_count", icon: "〰️", color: "bg-yellow-500", value: stats.zero_profit_count },
+                    
+                    // 8. Losing Trades (Profit < 0)
+                    { label: "Losing Trades", key: "negative_profit_count", icon: "❌", color: "bg-red-500", value: stats.negative_profit_count },
+                    
+                    // 9. Number of Long Positions
+                    { label: "Long Positions", key: "long_count", icon: "⬆️", color: "bg-indigo-500", value: stats.long_count },
+                    
+                    // 10. Number of Shorts
+                    { label: "Short Positions", key: "short_count", icon: "⬇️", color: "bg-purple-500", value: stats.short_count },
+                ];
+
+                statsContainer.innerHTML = statDefinitions.map(def => {
+                    // Note: Since R-sums are now integers, we only use toFixed(2) for dollar values
+                    const displayValue = `${def.prefix || ''}${def.value}`;
+                    return `
+                        <div class="stat-card ${def.color} text-white p-4 flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-light uppercase">${def.label}</span>
+                                <span class="text-xl">${def.icon}</span>
+                            </div>
+                            <div class="text-3xl font-bold">${displayValue}</div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error("Error loading statistics:", error);
+                statsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-red-500">Failed to load statistics.</div>';
+            }
         }
 
+        async function loadHistory() {
+            const tableHead = document.querySelector('#history-table thead');
+            const tableBody = document.querySelector('#history-table tbody');
+            tableBody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-gray-500">Loading history data...</td></tr>';
+            
+            try {
+                const res = await fetch('/api/positions_history');
+                if (!res.ok) throw new Error('Failed to fetch history data');
+                const data = await res.json();
+                
+                // CRITICAL CHANGE: Reverse the array to show the latest records first
+                data.reverse();
+
+                // Build header once
+                tableHead.innerHTML = `<tr>${columns.map(col => `<th class="sticky top-0">${col.replace(/_/g, ' ')}</th>`).join('')}</tr>`;
+
+                // Build body rows
+                tableBody.innerHTML = data.map(row => {
+                    const profit = parseFloat(row.profit);
+                    
+                    let profitClass = 'profit-zero';
+                    let rowBgClass = 'bg-yellow-50'; // Light yellow for zero/breakeven
+
+                    if (profit > 0) {
+                        profitClass = 'profit-positive';
+                        rowBgClass = 'bg-green-50'; // Very light green for positive
+                    } else if (profit < 0) {
+                        profitClass = 'profit-negative';
+                        rowBgClass = 'bg-red-50'; // Very light red for negative
+                    }
+
+                    return `
+                        <tr class="${rowBgClass}">
+                            ${columns.map(col => {
+                                const cellValue = row[col] ?? '';
+                                // Only apply the strong color class to the profit column (for text contrast)
+                                const cellClass = col === 'profit' ? profitClass : 'text-gray-700'; 
+                                return `<td class="${cellClass}">${cellValue}</td>`;
+                            }).join('')}
+                        </tr>
+                    `;
+                }).join('');
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="11" class="text-center py-8 text-gray-500">No positions history found.</td></tr>';
+                }
+
+            } catch (error) {
+                console.error("Error loading history:", error);
+                tableBody.innerHTML = '<tr><td colspan="11" class="text-center py-8 text-red-500">Failed to load position history.</td></tr>';
+            }
+        }
+
+        function refreshData() {
+            loadStatistics();
+            loadHistory();
+        }
+
+
+        // --- Button Actions ---
+
         function downloadCSV() {
+            // This relies on the Flask route with as_attachment=True
             window.location.href = '/download/history';
         }
 
-        function openInGoogleSheets() {
-            const csvUrl = 'http://ahmad98913.online:50001/download/history'; // Replace with your actual server URL
-            const sheetsUrl = `https://docs.google.com/spreadsheets/u/0/?usp=drive_web#url=${encodeURIComponent(csvUrl)}`;
-            window.open(sheetsUrl, '_blank');
-        }
-
-        loadHistory();
+        // --- Initial Load ---
+        refreshData();
     </script>
 </body>
 

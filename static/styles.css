@@ -72,16 +72,6 @@ table.positions-table {
     text-transform: uppercase;
 }
 
-.positions-table tr:nth-child(even) {
-    background-color: #181b22;
-}
-
-.positions-table tr:hover {
-    background-color: #2a2f3a;
-    transition: background-color 0.2s ease-in-out;
-}
-
-
 .header {
     display: flex;
     justify-content: space-between;
@@ -147,4 +137,19 @@ table.positions-table {
 
 .header button:hover {
     background-color: #00b070;
+}
+
+.profit-positive {
+    background-color: #c6fce7;
+    color: #000000;
+}
+
+.profit-negative {
+    background-color: #ffd2d6;
+    color: #000000;
+}
+
+.profit-zero {
+    background-color: #feffec;
+    color: #000000;
 }
