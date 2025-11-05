@@ -34,9 +34,6 @@ jobs:
         script: |
           set -e
 
-          echo "Creating persistent folder on host..."
-          mkdir -p /trader_bot_hdd
-
           echo "Stopping existing container if running..."
           if docker ps -q -f name=exchangeui; then
             docker stop exchangeui || echo "Failed to stop exchangeui"
