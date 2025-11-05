@@ -1,0 +1,57 @@
+name: Deploy Exchange UI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Get commit hash
+      run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+    - name: Build Docker image
+      run: docker build --build-arg COMMIT_HASH=${{ env.COMMIT_HASH }} -t arzaghi/exchangeui:latest .
+
+    - name: Push Docker image
+      run: docker push arzaghi/exchangeui:latest
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        port: ${{ secrets.SSH_PORT }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          set -e
+
+          echo "Creating persistent folder on host..."
+          mkdir -p /trader_bot_hdd
+
+          echo "Stopping existing container if running..."
+          if docker ps -q -f name=exchangeui; then
+            docker stop exchangeui || echo "Failed to stop exchangeui"
+          fi
+
+          echo "Pulling latest image..."
+          docker pull arzaghi/exchangeui:latest
+
+          echo "Removing existing container if exists..."
+          if docker ps -a -q -f name=exchangeui; then
+            docker rm exchangeui || echo "Failed to remove exchangeui"
+          fi
+
+          echo "Starting new container..."
+          docker run -d -t --name exchangeui \
+            -p 50001:5000 \
+            -v /trader_bot_hdd:/HDD \
+            arzaghi/exchangeui:latest

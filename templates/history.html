@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Position History</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <h1>📚 Position History</h1>
+    <button onclick="downloadCSV()">⬇️ Download CSV</button>
+    <button onclick="loadHistory()">🔄 Refresh</button>
+    <table id="history-table"></table>
+
+    <script>
+        async function loadHistory() {
+            const res = await fetch('/api/positions_history');
+            const data = await res.json();
+            const table = document.getElementById('history-table');
+            table.innerHTML = `
+        <tr>
+            ${Object.keys(data[0]).map(col => `<th>${col}</th>`).join('')}
+        </tr>
+        ${data.map(row => `
+                <tr>
+                    ${Object.values(row).map(val => `<td>${val}</td>`).join('')}
+                </tr>
+            `).join('')}
+        `;
+        }
+
+        function downloadCSV() {
+            window.location.href = '/download/history';
+        }
+
+        loadHistory();
+    </script>
+</body>
+
+</html>
