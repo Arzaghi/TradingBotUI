@@ -153,12 +153,12 @@
 
                     // 4. NEW: Total Net Profit (R Sum) - R-Multiple Value (Now integer)
                     { label: "Total Net Profit (R Sum)", key: "total_profit", icon: "➗", color: stats.total_profit >= 0 ? "bg-indigo-700" : "bg-red-700", value: stats.total_profit, prefix: 'R' },
-
-                    // 5. Winning Trades (Profit > 0)
-                    { label: "Winning Trades", key: "winning_trades_count", icon: "✅", color: "bg-green-500", value: stats.winning_trades_count },
                     
-                    // 6. Total Gross Profit (R Sum) - R-Multiple Value (Now integer)
+                    // 5. Total Gross Profit (R Sum) - R-Multiple Value (Now integer)
                     { label: "Total Gross Profit (R Sum)", key: "positive_profit_sum", icon: "📈", color: "bg-teal-500", value: stats.positive_profit_sum, prefix: 'R' },
+
+                    // 6. Winning Trades (Profit > 0)
+                    { label: "Winning Trades", key: "winning_trades_count", icon: "✅", color: "bg-green-500", value: stats.winning_trades_count },
 
                     // 7. Breakeven Trades (Profit = 0)
                     { label: "Breakeven Trades", key: "zero_profit_count", icon: "〰️", color: "bg-yellow-500", value: stats.zero_profit_count },
