@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/static/styles.css" />
 </head>
 
-<body>
+<body dir="ltr">
     <div class="header">
         <h1>📚 Exchange UI — Position History</h1>
         <div class="header-buttons">
@@ -26,6 +26,11 @@
     </div>
 
     <script>
+        const columns = [
+            "type", "symbol", "interval", "entry", "initial_sl", "initial_tp",
+            "exit_price", "open_time", "close_time", "duration", "profit"
+        ];
+
         async function loadHistory() {
             const res = await fetch('/api/positions_history');
             const data = await res.json();
@@ -33,16 +38,12 @@
             const tableBody = document.querySelector('#history-table tbody');
 
             tableHead.innerHTML = `
-        <tr>
-          ${Object.keys(data[0]).map(col => `<th>${col}</th>`).join('')}
-        </tr>
-      `;
+        <tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>
+        `;
 
             tableBody.innerHTML = data.map(row => `
-        <tr>
-          ${Object.values(row).map(val => `<td>${val}</td>`).join('')}
-        </tr>
-      `).join('');
+        <tr>${columns.map(col => `<td>${row[col] ?? ''}</td>`).join('')}</tr>
+        `).join('');
         }
 
         function downloadCSV() {

@@ -6,7 +6,7 @@
   <title>📈 Live Positions</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
-<body>
+<body dir="ltr">
   <div class="header">
     <h1>📈 Exchange UI — Live Positions</h1>
     <button onclick="window.location.href='/history'">📚 View History</button>
@@ -19,28 +19,29 @@
     </table>
   </div>
 
-  <script>
+<script>
+    const columns = [
+        "id", "type", "symbol", "interval", "open_time", "entry",
+        "initial_sl", "current_sl", "next_tp", "current_profit", "current_price"
+    ];
+
     async function fetchPositions() {
-      const res = await fetch('/api/current_positions');
-      const data = await res.json();
-      const tableHead = document.querySelector('#positions-table thead');
-      const tableBody = document.querySelector('#positions-table tbody');
+        const res = await fetch('/api/current_positions');
+        const data = await res.json();
+        const tableHead = document.querySelector('#positions-table thead');
+        const tableBody = document.querySelector('#positions-table tbody');
 
-      tableHead.innerHTML = `
-        <tr>
-          ${Object.keys(data[0]).map(col => `<th>${col}</th>`).join('')}
-        </tr>
-      `;
+        tableHead.innerHTML = `
+            <tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>
+        `;
 
-      tableBody.innerHTML = data.map(row => `
-        <tr>
-          ${Object.values(row).map(val => `<td>${val}</td>`).join('')}
-        </tr>
-      `).join('');
+        tableBody.innerHTML = data.map(row => `
+            <tr>${columns.map(col => `<td>${row[col]}</td>`).join('')}</tr>
+        `).join('');
     }
 
     fetchPositions();
     setInterval(fetchPositions, 2000);
-  </script>
+</script>
 </body>
 </html>

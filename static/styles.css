@@ -1,4 +1,6 @@
 body {
+    direction: ltr;
+    text-align: left;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #0e1117;
     color: #f1f1f1;
@@ -6,16 +8,35 @@ body {
     padding: 20px;
 }
 
-body {
-  direction: ltr; /* Force left-to-right layout */
-  text-align: left; /* Align text to the left */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1c1f26;
+    padding: 15px 20px;
+    border-bottom: 2px solid #333;
 }
 
-.positions-table th,
-.positions-table td {
-  text-align: left; /* Ensure all table cells align left */
+.header h1 {
+    margin: 0;
+    color: #00d084;
+    font-size: 24px;
 }
 
+.header button {
+    background-color: #00d084;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.header button:hover {
+    background-color: #00b070;
+}
 
 .container {
     max-width: 1200px;
@@ -42,6 +63,7 @@ table.positions-table {
     border: 1px solid #333;
     text-align: center;
     font-size: 14px;
+    direction: ltr;
 }
 
 .positions-table th {
@@ -58,6 +80,7 @@ table.positions-table {
     background-color: #2a2f3a;
     transition: background-color 0.2s ease-in-out;
 }
+
 
 .header {
     display: flex;
