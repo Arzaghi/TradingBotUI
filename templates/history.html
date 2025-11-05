@@ -152,10 +152,10 @@
                     { label: "Risk per Trade (Fixed)", key: "risk", icon: "🛡️", color: "bg-gray-700", value: RISK_AMOUNT.toFixed(2), prefix: '$' },
 
                     // 4. NEW: Total Net Profit (R Sum) - R-Multiple Value (Now integer)
-                    { label: "Total Net Profit (R Sum)", key: "total_profit", icon: "➗", color: stats.total_profit >= 0 ? "bg-indigo-700" : "bg-red-700", value: stats.total_profit, prefix: 'R' },
+                    { label: "Total Net Profit (R Sum)", key: "total_profit", icon: "➗", color: stats.total_profit >= 0 ? "bg-indigo-700" : "bg-red-700", value: stats.total_profit },
                     
                     // 5. Total Gross Profit (R Sum) - R-Multiple Value (Now integer)
-                    { label: "Total Gross Profit (R Sum)", key: "positive_profit_sum", icon: "📈", color: "bg-teal-500", value: stats.positive_profit_sum, prefix: 'R' },
+                    { label: "Total Gross Profit (R Sum)", key: "positive_profit_sum", icon: "📈", color: "bg-teal-500", value: stats.positive_profit_sum },
 
                     // 6. Winning Trades (Profit > 0)
                     { label: "Winning Trades", key: "winning_trades_count", icon: "✅", color: "bg-green-500", value: stats.winning_trades_count },
