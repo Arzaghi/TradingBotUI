@@ -27,3 +27,6 @@ def api_positions_history():
 @app.route('/download/history')
 def download_history():
     return send_file(os.path.join(DATA_DIR, 'positions_history.csv'), as_attachment=True)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)

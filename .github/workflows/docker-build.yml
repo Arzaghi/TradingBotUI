@@ -52,3 +52,6 @@ jobs:
             -p 50001:5000 \
             -v /trader_bot_hdd:/HDD \
             arzaghi/exchangeui:latest
+
+
+            
