@@ -109,4 +109,4 @@ def download_history():
 
 if __name__ == '__main__':
     # Changed port to match the one in the JavaScript
-    app.run(host='0.0.0.0', port=50001)
+    app.run(host='0.0.0.0', port=5000)
