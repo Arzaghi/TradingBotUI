@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install flask pandas
+RUN pip install flask pandas flask-cors
 
 EXPOSE 5000
 

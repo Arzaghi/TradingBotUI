@@ -14,6 +14,7 @@
         <div class="header-buttons">
             <button onclick="window.location.href='/'">📈 Back to Live</button>
             <button onclick="downloadCSV()">⬇️ Download CSV</button>
+            <button onclick="openInGoogleSheets()">📂 Open in Google Sheets</button>
             <button onclick="loadHistory()">🔄 Refresh</button>
         </div>
     </div>
@@ -48,6 +49,12 @@
 
         function downloadCSV() {
             window.location.href = '/download/history';
+        }
+
+        function openInGoogleSheets() {
+            const csvUrl = 'http://ahmad98913.online:50001/download/history'; // Replace with your actual server URL
+            const sheetsUrl = `https://docs.google.com/spreadsheets/u/0/?usp=drive_web#url=${encodeURIComponent(csvUrl)}`;
+            window.open(sheetsUrl, '_blank');
         }
 
         loadHistory();
