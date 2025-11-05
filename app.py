@@ -4,7 +4,7 @@ import os
 
 app = Flask(__name__)
 
-DATA_DIR = "/trader_bot_hdd"
+DATA_DIR = "/HDD"
 
 @app.route('/')
 def index():
