@@ -30,10 +30,6 @@ def api_positions_history():
 
 @app.route('/download/history')
 def download_history():
-    return send_file(os.path.join(DATA_DIR, 'positions_history.csv'), as_attachment=True)
-
-@app.route('/download/history')
-def download_history():
     return send_file(os.path.join(DATA_DIR, 'positions_history.csv'), mimetype='text/csv', as_attachment=False)
 
 if __name__ == '__main__':
