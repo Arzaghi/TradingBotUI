@@ -1,35 +1,46 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>Live Positions</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📈 Live Positions</title>
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
-
 <body>
-    <h1>📈 Current Positions</h1>
-    <table id="positions-table"></table>
+  <div class="header">
+    <h1>📈 Exchange UI — Live Positions</h1>
+    <button onclick="window.location.href='/history'">📚 View History</button>
+  </div>
 
-    <script>
-        async function fetchPositions() {
-            const res = await fetch('/api/current_positions');
-            const data = await res.json();
-            const table = document.getElementById('positions-table');
-            table.innerHTML = `
+  <div class="container">
+    <table id="positions-table" class="positions-table">
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function fetchPositions() {
+      const res = await fetch('/api/current_positions');
+      const data = await res.json();
+      const tableHead = document.querySelector('#positions-table thead');
+      const tableBody = document.querySelector('#positions-table tbody');
+
+      tableHead.innerHTML = `
         <tr>
-            ${Object.keys(data[0]).map(col => `<th>${col}</th>`).join('')}
+          ${Object.keys(data[0]).map(col => `<th>${col}</th>`).join('')}
         </tr>
-        ${data.map(row => `
-          <tr>
-            ${Object.values(row).map(val => `<td>${val}</td>`).join('')}
-          </tr>
-        `).join('')}
       `;
-        }
 
-        fetchPositions();
-        setInterval(fetchPositions, 2000);
-    </script>
+      tableBody.innerHTML = data.map(row => `
+        <tr>
+          ${Object.values(row).map(val => `<td>${val}</td>`).join('')}
+        </tr>
+      `).join('');
+    }
+
+    fetchPositions();
+    setInterval(fetchPositions, 2000);
+  </script>
 </body>
-
 </html>

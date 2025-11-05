@@ -1,32 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Position History</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📚 Position History</title>
+    <link rel="stylesheet" href="/static/style.css" />
 </head>
 
 <body>
-    <h1>📚 Position History</h1>
-    <button onclick="downloadCSV()">⬇️ Download CSV</button>
-    <button onclick="loadHistory()">🔄 Refresh</button>
-    <table id="history-table"></table>
+    <div class="header">
+        <h1>📚 Exchange UI — Position History</h1>
+        <div class="header-buttons">
+            <button onclick="window.location.href='/'">📈 Back to Live</button>
+            <button onclick="downloadCSV()">⬇️ Download CSV</button>
+            <button onclick="loadHistory()">🔄 Refresh</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <table id="history-table" class="positions-table">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
     <script>
         async function loadHistory() {
             const res = await fetch('/api/positions_history');
             const data = await res.json();
-            const table = document.getElementById('history-table');
-            table.innerHTML = `
+            const tableHead = document.querySelector('#history-table thead');
+            const tableBody = document.querySelector('#history-table tbody');
+
+            tableHead.innerHTML = `
         <tr>
-            ${Object.keys(data[0]).map(col => `<th>${col}</th>`).join('')}
+          ${Object.keys(data[0]).map(col => `<th>${col}</th>`).join('')}
         </tr>
-        ${data.map(row => `
-                <tr>
-                    ${Object.values(row).map(val => `<td>${val}</td>`).join('')}
-                </tr>
-            `).join('')}
-        `;
+      `;
+
+            tableBody.innerHTML = data.map(row => `
+        <tr>
+          ${Object.values(row).map(val => `<td>${val}</td>`).join('')}
+        </tr>
+      `).join('');
         }
 
         function downloadCSV() {
