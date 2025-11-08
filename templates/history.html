@@ -81,7 +81,7 @@
 
 <body dir="ltr" class="min-h-screen">
     <div class="header">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">📚 KHAMENEI Exchange — Position History</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">📚 Virtual Exchange Trade Strategy Tester — Position History</h1>
         <div class="header-buttons flex space-x-3">
             <button onclick="window.location.href='/'"
                 class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150">📈 Back
@@ -118,8 +118,8 @@
 
     <script>
         const columns = [
-            "type", "symbol", "interval", "entry", "initial_sl", "initial_tp",
-            "exit_price", "open_time", "close_time", "duration", "profit"
+            "profit", "type", "symbol", "interval", "entry", "initial_sl", "initial_tp",
+            "exit_price", "open_time", "close_time", "duration"
         ];
         
         // Fixed Risk Amount for Calculation (as requested)
@@ -251,11 +251,7 @@
             loadHistory();
         }
 
-
-        // --- Button Actions ---
-
         function downloadCSV() {
-            // This relies on the Flask route with as_attachment=True
             window.location.href = '/download/history';
         }
 
