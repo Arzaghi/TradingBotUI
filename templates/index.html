@@ -99,11 +99,10 @@
     <script>
         const columns = [
             "id", "strategy", "type", "symbol", "interval", "open_time", "entry",
-            "initial_sl", "current_sl", "next_tp", "current_profit", "current_price"
+            "initial_sl", "current_sl", "next_tp", "pnl", "current_price"
         ];
 
-        // Map column names to their index in the row for fast lookup (e.g., columns[9] is current_profit)
-        const COL_PROFIT_INDEX = columns.indexOf('current_profit');
+        const COL_PROFIT_INDEX = columns.indexOf('pnl');
         const COL_PRICE_INDEX = columns.indexOf('current_price');
 
         /**
@@ -137,7 +136,7 @@
                 td.className = 'text-gray-700'; // Default text color
 
                 // Special handling for profit and price cells for later patching
-                if (col === 'current_profit') {
+                if (col === 'pnl') {
                     td.setAttribute('data-column', 'profit');
                 } else if (col === 'current_price') {
                     td.setAttribute('data-column', 'price');
@@ -146,7 +145,7 @@
             });
 
             // Apply initial colors based on profit
-            updateRowColors(tr, parseFloat(row.current_profit));
+            updateRowColors(tr, parseFloat(row.pnl));
             return tr;
         }
 
@@ -210,7 +209,7 @@
                 // 2. Process incoming data: Patch or Create
                 data.forEach(row => {
                     const id = row.id;
-                    const profit = parseFloat(row.current_profit);
+                    const profit = parseFloat(row.pnl);
                     const price = row.current_price;
 
                     let tr;
